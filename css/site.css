@@ -230,8 +230,8 @@ main { max-width: 72rem; margin: 0 auto; padding: 3rem 1.5rem 4rem; display: fle
 .slider-track {
   display: grid; grid-auto-flow: column; gap: 1rem;
   overflow-x: auto; overscroll-behavior-x: contain;
-  scroll-snap-type: x mandatory; scroll-padding: 0 2px;
-  padding: 2px 2px 6px;
+  scroll-snap-type: x mandatory; scroll-padding: 0 6px;
+  padding: 12px 6px 22px; margin: -12px -6px -16px;
   scrollbar-width: none;
 }
 .slider-track::-webkit-scrollbar { display: none; }
@@ -358,9 +358,9 @@ main { max-width: 72rem; margin: 0 auto; padding: 3rem 1.5rem 4rem; display: fle
 /* experience: horizontal timeline */
 .slider-exp .slider-track {
   grid-auto-columns: minmax(15.5rem, calc((100% - 2rem) / 3));
-  padding-top: 1.6rem;
+  padding-top: calc(1.6rem + 10px);
   background:
-    linear-gradient(var(--rule), var(--rule)) 0 .45rem / 100% 1px no-repeat;
+    linear-gradient(var(--rule), var(--rule)) 0 calc(.45rem + 10px) / 100% 1px no-repeat;
 }
 .xcard {
   position: relative; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper);
@@ -482,3 +482,50 @@ footer {
   .portrait-wrap .portrait { transition: none !important; }
 }
 @media print { .eeg-bg { display: none; } }
+
+/* ---------- laser-pointer cursor + hover lift ---------- */
+:root { --laser: #12968C; }
+@media (prefers-color-scheme: dark) { :root { --laser: #5EE6D8; } }
+
+.laser, .laser-halo {
+  position: fixed; left: 0; top: 0; z-index: 1000; pointer-events: none;
+  border-radius: 50%; opacity: 0; transition: opacity .25s, width .25s, height .25s, background-color .25s, border-color .25s;
+  will-change: transform;
+}
+.laser {
+  width: 10px; height: 10px; margin: -5px 0 0 -5px;
+  background: var(--laser);
+  box-shadow: 0 0 6px 2px color-mix(in srgb, var(--laser) 70%, transparent), 0 0 18px 6px color-mix(in srgb, var(--laser) 35%, transparent);
+}
+.laser-halo {
+  width: 34px; height: 34px; margin: -17px 0 0 -17px;
+  border: 1px solid color-mix(in srgb, var(--laser) 55%, transparent);
+  background: radial-gradient(circle, color-mix(in srgb, var(--laser) 16%, transparent), transparent 70%);
+}
+html.has-laser.laser-on .laser, html.has-laser.laser-on .laser-halo { opacity: 1; }
+html.has-laser.laser-hover .laser-halo { width: 52px; height: 52px; margin: -26px 0 0 -26px; border-color: var(--laser); }
+html.has-laser.laser-down .laser { width: 6px; height: 6px; margin: -3px 0 0 -3px; }
+html.has-laser, html.has-laser * { cursor: none !important; }
+html.has-laser input, html.has-laser textarea, html.has-laser [contenteditable] { cursor: text !important; }
+
+/* items lift slightly under the pointer */
+@media (hover: hover) and (pointer: fine) {
+  .pcard, .ncard, .xcard, .plain li, .edu li, .interests li,
+  .links a, .scholar-btn, .chip-link, .nav-btn, .chev, .portrait-wrap {
+    transition: transform .35s cubic-bezier(.2,.8,.25,1), box-shadow .35s, border-color .25s, background-color .25s, color .2s;
+  }
+  .pcard:hover, .ncard:hover, .xcard:hover {
+    transform: translateY(-5px) scale(1.015);
+    box-shadow: 0 16px 34px -16px rgba(0,0,0,.28), 0 0 0 1px color-mix(in srgb, var(--laser) 45%, transparent);
+    border-color: color-mix(in srgb, var(--laser) 45%, var(--rule));
+  }
+  .plain li:hover, .edu li:hover { transform: translateX(4px); }
+  .interests li:hover, .links a:hover, .scholar-btn:hover, .chip-link:hover { transform: translateY(-2px); }
+  .portrait-wrap:hover { transform: translateY(-4px) rotate(-.6deg); box-shadow: 0 0 0 1px var(--rule), 0 26px 46px -18px rgba(0,0,0,.4); }
+  .section > summary:hover .chev { transform: scale(1.1); }
+  .section[open] > summary:hover .chev { transform: rotate(180deg) scale(1.1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pcard:hover, .ncard:hover, .xcard:hover, .plain li:hover, .edu li:hover,
+  .interests li:hover, .links a:hover, .scholar-btn:hover, .chip-link:hover, .portrait-wrap:hover { transform: none !important; }
+}

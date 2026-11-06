@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/site.css?v=20261106d">
+  <link rel="stylesheet" href="css/site.css?v=20261106e">
 
   <script type="application/ld+json">
   {
@@ -539,6 +539,38 @@
     a.addEventListener('click', function () { openTarget(a.getAttribute('href').slice(1)); });
   });
   openTarget(location.hash.slice(1));
+})();
+</script>
+
+<script>
+// ---- Laser-pointer cursor (mouse / trackpad only) ----
+(function () {
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var root = document.documentElement;
+  var dot = document.createElement('div'), halo = document.createElement('div');
+  dot.className = 'laser'; halo.className = 'laser-halo';
+  dot.setAttribute('aria-hidden', 'true'); halo.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(halo); document.body.appendChild(dot);
+  root.classList.add('has-laser');
+  var mx = -100, my = -100, hx = -100, hy = -100, raf = 0;
+  var HOVER = 'a, button, summary, .pcard, .ncard, .xcard, .portrait-wrap, [tabindex]';
+  function loop() {
+    var k = reduce ? 1 : 0.18;
+    hx += (mx - hx) * k; hy += (my - hy) * k;
+    dot.style.transform = 'translate(' + mx + 'px,' + my + 'px)';
+    halo.style.transform = 'translate(' + hx + 'px,' + hy + 'px)';
+    raf = (Math.abs(mx - hx) > .2 || Math.abs(my - hy) > .2) ? requestAnimationFrame(loop) : 0;
+  }
+  window.addEventListener('mousemove', function (e) {
+    mx = e.clientX; my = e.clientY;
+    if (!root.classList.contains('laser-on')) { hx = mx; hy = my; root.classList.add('laser-on'); }
+    root.classList.toggle('laser-hover', !!(e.target.closest && e.target.closest(HOVER)));
+    if (!raf) raf = requestAnimationFrame(loop);
+  }, { passive: true });
+  document.addEventListener('mouseleave', function () { root.classList.remove('laser-on'); });
+  window.addEventListener('mousedown', function () { root.classList.add('laser-down'); });
+  window.addEventListener('mouseup', function () { root.classList.remove('laser-down'); });
 })();
 </script>
 </body>
