@@ -601,7 +601,7 @@
 </script>
 
 <script>
-// ---- Stimulation pulse when clicking in the empty side margins ----
+// ---- Stimulation ripples when clicking (or holding) in the empty side margins ----
 (function () {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   var cv = null, ctx, dpr = 1, effects = [], raf = 0;
@@ -617,10 +617,7 @@
     cv.style.width = innerWidth + 'px'; cv.style.height = innerHeight + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
-  function colors() {
-    var cs = getComputedStyle(document.documentElement);
-    return { laser: cs.getPropertyValue('--laser').trim() || '#12968C', trace: cs.getPropertyValue('--trace').trim() || '#B3123F' };
-  }
+  function laser() { return getComputedStyle(document.documentElement).getPropertyValue('--laser').trim() || '#12968C'; }
   function inGutter(e) {
     var col = document.querySelector('main .section');
     if (!col) return false;
@@ -628,72 +625,65 @@
     if (e.clientX >= r.left - 8 && e.clientX <= r.right + 8) return false;
     return !(e.target.closest && e.target.closest('a, button, summary, input, textarea, select, label, .topbar, img'));
   }
-  function spawn(x, y) {
-    var c = colors(), sparks = [], n = 14;
+  function spawn(x, y, light) {
+    var sparks = [], n = light ? 8 : 14;
     for (var i = 0; i < n; i++) {
       var a = (i / n) * Math.PI * 2 + Math.random() * 0.35;
       sparks.push({ a: a, v: 90 + Math.random() * 120, len: 10 + Math.random() * 14, kink: (Math.random() - .5) * 0.9 });
     }
-    // draw the trace toward whichever side has more empty margin, and keep it inside the margin
-    var col = document.querySelector('main .section').getBoundingClientRect();
-    var roomR = (x < col.left ? col.left : innerWidth) - x - 24, roomL = x - (x > col.right ? col.right : 0) - 24;
-    var dir = roomR >= roomL ? 1 : -1, w = Math.max(40, Math.min(120, Math.max(roomR, roomL) - 14));
-    effects.push({ x: x, y: y, t0: performance.now(), sparks: sparks, c: c, dir: dir, w: w });
+    effects.push({ x: x, y: y, t0: performance.now(), sparks: sparks, c: laser(), light: light });
     if (!raf) raf = requestAnimationFrame(draw);
-  }
-  function ep(t) {   // evoked potential shape, t in [0,1]
-    return -0.25 * Math.exp(-Math.pow((t - .12) / .04, 2)) + 0.6 * Math.exp(-Math.pow((t - .28) / .07, 2))
-           - 1.0 * Math.exp(-Math.pow((t - .5) / .1, 2)) + 0.35 * Math.exp(-Math.pow((t - .78) / .12, 2));
   }
   function draw(now) {
     ctx.clearRect(0, 0, innerWidth, innerHeight);
-    effects = effects.filter(function (f) { return now - f.t0 < 1300; });
+    effects = effects.filter(function (f) { return now - f.t0 < 1100; });
     effects.forEach(function (f) {
       var t = (now - f.t0) / 1000, c = f.c;
       ctx.save();
-      // stimulation rings
-      for (var k = 0; k < 3; k++) {
+      var rings = f.light ? 2 : 3;
+      for (var k = 0; k < rings; k++) {
         var tk = t - k * 0.12; if (tk <= 0) continue;
         var r = 6 + tk * 140, al = Math.max(0, 1 - tk / 0.9);
-        ctx.globalAlpha = al * 0.8; ctx.strokeStyle = c.laser; ctx.lineWidth = 1.6 - k * 0.4;
+        ctx.globalAlpha = al * (f.light ? 0.6 : 0.8); ctx.strokeStyle = c; ctx.lineWidth = 1.6 - k * 0.4;
         ctx.beginPath(); ctx.arc(f.x, f.y, r, 0, Math.PI * 2); ctx.stroke();
       }
-      // core flash
       var fl = Math.max(0, 1 - t / 0.25);
       if (fl > 0) {
-        var g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, 26);
-        g.addColorStop(0, c.laser); g.addColorStop(1, 'transparent');
-        ctx.globalAlpha = fl; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(f.x, f.y, 26, 0, Math.PI * 2); ctx.fill();
+        var g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, 24);
+        g.addColorStop(0, c); g.addColorStop(1, 'transparent');
+        ctx.globalAlpha = fl * (f.light ? .6 : 1); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(f.x, f.y, 24, 0, Math.PI * 2); ctx.fill();
       }
-      // neural sparks (little action-potential streaks)
-      ctx.lineCap = 'round';
-      f.sparks.forEach(function (s, i) {
-        var d = s.v * t * (1 - t * 0.35), al = Math.max(0, 1 - t / 0.85);
+      ctx.lineCap = 'round'; ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineWidth = 1.7;
+      f.sparks.forEach(function (s) {
+        var d = s.v * t * (1 - t * 0.35), al = Math.max(0, 1 - t / 0.8);
         if (al <= 0) return;
-        var a = s.a + s.kink * t;
-        var x1 = f.x + Math.cos(a) * (10 + d), y1 = f.y + Math.sin(a) * (10 + d);
-        var x0 = f.x + Math.cos(a - s.kink * .2) * (10 + Math.max(0, d - s.len)), y0 = f.y + Math.sin(a - s.kink * .2) * (10 + Math.max(0, d - s.len));
-        ctx.globalAlpha = al; ctx.strokeStyle = i % 4 === 0 ? c.trace : c.laser; ctx.lineWidth = 1.8;
-        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
-        ctx.fillStyle = ctx.strokeStyle; ctx.beginPath(); ctx.arc(x1, y1, 1.6, 0, Math.PI * 2); ctx.fill();
+        var a = s.a + s.kink * t, r1 = 10 + d, r0 = 10 + Math.max(0, d - s.len);
+        ctx.globalAlpha = al;
+        ctx.beginPath();
+        ctx.moveTo(f.x + Math.cos(a - s.kink * .2) * r0, f.y + Math.sin(a - s.kink * .2) * r0);
+        ctx.lineTo(f.x + Math.cos(a) * r1, f.y + Math.sin(a) * r1);
+        ctx.stroke();
+        ctx.beginPath(); ctx.arc(f.x + Math.cos(a) * r1, f.y + Math.sin(a) * r1, 1.5, 0, Math.PI * 2); ctx.fill();
       });
-      // evoked response drawing out from the click
-      var W = f.w, A = 22, prog = Math.min(1, t / 0.55), fade = Math.max(0, 1 - Math.max(0, t - 0.7) / 0.6);
-      ctx.globalAlpha = fade; ctx.strokeStyle = c.trace; ctx.lineWidth = 2; ctx.lineJoin = 'round';
-      ctx.beginPath();
-      for (var j = 0; j <= 60 * prog; j++) {
-        var u = j / 60, xx = f.x + f.dir * (14 + u * W), yy = f.y + 34 + ep(u) * A;
-        if (j === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
-      }
-      ctx.stroke();
       ctx.restore();
     });
     raf = effects.length ? requestAnimationFrame(draw) : (ctx.clearRect(0, 0, innerWidth, innerHeight), 0);
   }
-  window.addEventListener('click', function (e) {
-    if (!inGutter(e)) return;
-    ensure(); spawn(e.clientX, e.clientY);
+  // press = one burst; keep holding = ripples keep coming, following the pointer
+  var holding = false, hx = 0, hy = 0, timer = 0;
+  function stop() { holding = false; clearInterval(timer); timer = 0; }
+  window.addEventListener('mousedown', function (e) {
+    if (e.button !== 0 || !inGutter(e)) return;
+    e.preventDefault();               // no text selection while holding
+    ensure(); holding = true; hx = e.clientX; hy = e.clientY;
+    spawn(hx, hy, false);
+    clearInterval(timer);
+    timer = setInterval(function () { if (holding) spawn(hx, hy, true); }, 240);
   });
+  window.addEventListener('mousemove', function (e) { if (holding) { hx = e.clientX; hy = e.clientY; } }, { passive: true });
+  window.addEventListener('mouseup', stop);
+  window.addEventListener('blur', stop);
+  document.addEventListener('mouseleave', stop);
 })();
 </script>
 </body>
