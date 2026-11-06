@@ -344,7 +344,7 @@ footer {
   .section > h2 { position: static; }
 }
 
-/* ---------- live EEG background + portrait pulse ---------- */
+/* ---------- live EEG background ---------- */
 .eeg-bg {
   position: absolute; inset: 0 auto auto 0; z-index: 0; pointer-events: none;
   will-change: transform;
@@ -353,34 +353,6 @@ footer {
 
 .portrait-wrap { position: relative; margin-bottom: 2.5rem; }
 .portrait-wrap .portrait { margin-bottom: 0; position: relative; z-index: 1; }
-.portrait-wrap .ring {
-  position: absolute; inset: 0; z-index: 0; border-radius: 2px; pointer-events: none;
-  border: 1.5px solid var(--trace); opacity: 0;
-}
-.portrait-wrap.pulse .ring { animation: ring-out 1.6s cubic-bezier(.2,.7,.3,1) forwards; }
-.portrait-wrap.pulse .ring.r2 { animation-delay: .22s; }
-@keyframes ring-out {
-  0%   { opacity: .75; transform: scale(1); }
-  100% { opacity: 0;   transform: scale(1.14); }
-}
-/* four electrodes on the photo frame that light up with each stimulus */
-.portrait-wrap .elec {
-  position: absolute; z-index: 2; width: 11px; height: 11px; border-radius: 50%;
-  background: var(--paper); border: 1.5px solid var(--ink);
-  transition: background-color .5s, border-color .5s, box-shadow .5s;
-}
-.portrait-wrap .e1 { top: -6px; left: 22%; }
-.portrait-wrap .e2 { top: 38%; right: -6px; }
-.portrait-wrap .e3 { bottom: -6px; right: 30%; }
-.portrait-wrap .e4 { top: 62%; left: -6px; }
-.portrait-wrap.pulse .elec { animation: elec-flash 1.2s ease-out forwards; }
-.portrait-wrap.pulse .e2 { animation-delay: .08s; }
-.portrait-wrap.pulse .e3 { animation-delay: .16s; }
-.portrait-wrap.pulse .e4 { animation-delay: .24s; }
-@keyframes elec-flash {
-  0%, 15% { background: var(--trace); border-color: var(--trace); box-shadow: 0 0 0 6px color-mix(in srgb, var(--trace) 22%, transparent); }
-  100% { background: var(--paper); border-color: var(--ink); box-shadow: 0 0 0 0 transparent; }
-}
 .portrait-wrap .portrait { transition: transform .6s cubic-bezier(.2,.7,.3,1); }
 .portrait-wrap:hover .portrait { transform: translate(-3px, -3px); }
 
@@ -389,6 +361,6 @@ footer {
   .portrait-wrap .portrait { width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .portrait-wrap .ring, .portrait-wrap .elec, .portrait-wrap .portrait { animation: none !important; transition: none !important; }
+  .portrait-wrap .portrait { transition: none !important; }
 }
-@media print { .eeg-bg, .portrait-wrap .elec { display: none; } }
+@media print { .eeg-bg { display: none; } }

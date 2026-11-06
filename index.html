@@ -73,9 +73,6 @@
     </div>
     <div class="portrait-wrap" id="portrait">
       <img class="portrait" src="images/portrait.webp" width="720" height="900" alt="Portrait of Suvadeep Maiti">
-      <span class="ring" aria-hidden="true"></span>
-      <span class="ring r2" aria-hidden="true"></span>
-      <span class="elec e1" aria-hidden="true"></span><span class="elec e2" aria-hidden="true"></span><span class="elec e3" aria-hidden="true"></span><span class="elec e4" aria-hidden="true"></span>
     </div>
   </div>
   <div class="trace-wrap" aria-hidden="true">
@@ -433,7 +430,6 @@
   if (!cv || !cv.getContext) return;
   var ctx = cv.getContext('2d');
   var hero = cv.parentElement;
-  var portrait = document.getElementById('portrait');
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var css = getComputedStyle(document.documentElement);
   var ink, trace;
@@ -486,9 +482,6 @@
     if (--nextStim <= 0) {
       sinceStim = 0; nextStim = Math.round((4 + rnd() * 2.5) * SPEED / STEP);
       stims.push(len); // position measured in samples from oldest; shifts with head
-      if (portrait && !reduce) {
-        portrait.classList.remove('pulse'); void portrait.offsetWidth; portrait.classList.add('pulse');
-      }
     }
     for (var c = 0; c < N; c++) {
       var ch = chans[c];
