@@ -504,18 +504,18 @@ footer {
 
 .laser {
   position: fixed; left: 0; top: 0; z-index: 1000; pointer-events: none;
-  width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%;
+  width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%;
   background: var(--laser); opacity: 0;
-  box-shadow: 0 0 6px 2px color-mix(in srgb, var(--laser) 70%, transparent), 0 0 18px 6px color-mix(in srgb, var(--laser) 35%, transparent);
+  box-shadow: 0 0 4px 1.5px color-mix(in srgb, var(--laser) 70%, transparent), 0 0 12px 4px color-mix(in srgb, var(--laser) 32%, transparent);
   transition: opacity .25s, width .2s, height .2s, margin .2s, box-shadow .2s;
   will-change: transform;
 }
 html.has-laser.laser-on .laser { opacity: 1; }
 html.has-laser.laser-hover .laser {
-  width: 14px; height: 14px; margin: -7px 0 0 -7px;
-  box-shadow: 0 0 8px 3px color-mix(in srgb, var(--laser) 75%, transparent), 0 0 26px 10px color-mix(in srgb, var(--laser) 38%, transparent);
+  width: 10px; height: 10px; margin: -5px 0 0 -5px;
+  box-shadow: 0 0 6px 2px color-mix(in srgb, var(--laser) 75%, transparent), 0 0 18px 7px color-mix(in srgb, var(--laser) 36%, transparent);
 }
-html.has-laser.laser-down .laser { width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; }
+html.has-laser.laser-down .laser { width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; }
 html.has-laser, html.has-laser * { cursor: none !important; }
 html.has-laser input, html.has-laser textarea, html.has-laser [contenteditable] { cursor: text !important; }
 
@@ -566,3 +566,6 @@ body, .topbar, .section, .pcard, .ncard, .xcard, .portrait-wrap { transition-pro
 .theme-toggle .moon { filter: drop-shadow(0 0 4px rgba(242,176,53,.55)); }
 .theme-toggle .sun { filter: drop-shadow(0 0 5px rgba(242,176,53,.6)); }
 @media (max-width: 900px) { .topbar-right { gap: 0; } }
+
+/* click effect canvas for the side margins */
+.pulse-fx { position: fixed; inset: 0; z-index: 999; pointer-events: none; }
