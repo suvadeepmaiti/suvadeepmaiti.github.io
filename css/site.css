@@ -278,17 +278,18 @@ main { max-width: 72rem; margin: 0 auto; padding: 3rem 1.5rem 4rem; display: fle
 .pcard:hover { border-color: var(--grid-strong); transform: translateY(-2px); }
 .pcard-art {
   aspect-ratio: 400 / 220;
-  background-color: var(--paper-2);
-  background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 20px 20px;
+  background: radial-gradient(circle at 30% 20%, #1F4247, #112326 65%, #0B1719);
   border-bottom: 1px solid var(--rule);
   display: grid; place-items: center; overflow: hidden;
 }
 .pcard-art svg { width: 100%; height: 100%; display: block; }
-.pcard-art img { width: 100%; height: 100%; object-fit: contain; padding: .5rem; mix-blend-mode: multiply; }
-@media (prefers-color-scheme: dark) { .pcard-art img { mix-blend-mode: normal; background: #fff; } }
+.pcard-art img {
+  width: auto; height: 86%; max-width: 92%; object-fit: contain;
+  background: #fff; border-radius: 8px; padding: 6px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.35);
+}
+.pcard:hover .pcard-art svg, .pcard:hover .pcard-art img { transform: scale(1.03); }
+.pcard-art svg, .pcard-art img { transition: transform .5s cubic-bezier(.2,.7,.3,1); }
 .pcard-body { padding: 1rem 1.1rem 1.15rem; display: flex; flex-direction: column; gap: .5rem; flex: 1; }
 .pcard h3 { font-family: var(--sans); font-weight: 650; font-size: 1.02rem; line-height: 1.32; letter-spacing: -0.01em; margin: 0; }
 .pcard-blurb { margin: 0; font-size: .95rem; line-height: 1.45; }
