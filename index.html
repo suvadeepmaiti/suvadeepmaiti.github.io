@@ -11,8 +11,8 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://suvadeepmaiti.github.io/">
   <meta property="og:image" content="https://suvadeepmaiti.github.io/images/portrait.webp">
-  <meta name="theme-color" content="#F2F5F1" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#121815" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#F2F5F1" media="(prefers-color-scheme: light)" id="tc-light">
+  <meta name="theme-color" content="#121815" media="(prefers-color-scheme: dark)" id="tc-dark">
 
   <link rel="icon" type="image/png" sizes="32x32" href="images/nicons/Icon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="images/nicons/Icon-16.png">
@@ -21,7 +21,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/site.css?v=20261106e">
+  <script>
+    (function () { try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+  </script>
+  <link rel="stylesheet" href="css/site.css?v=20261106g">
 
   <script type="application/ld+json">
   {
@@ -45,14 +48,20 @@
 <header class="topbar" id="top">
   <div class="topbar-inner">
     <a class="wordmark" href="#top">Suvadeep Maiti</a>
-    <nav aria-label="Sections">
-      <a href="#about">About</a>
-      <a href="#news">News</a>
-      <a href="#research">Research</a>
-      <a href="#experience">Experience</a>
-      <a href="#awards">Awards</a>
-      <a href="#contact">Contact</a>
-    </nav>
+    <div class="topbar-right">
+      <nav aria-label="Sections">
+        <a href="#about">About</a>
+        <a href="#news">News</a>
+        <a href="#research">Research</a>
+        <a href="#experience">Experience</a>
+        <a href="#awards">Awards</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark mode" title="Switch theme">
+        <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.2 14.6A8.4 8.4 0 0 1 9.4 3.8a.6.6 0 0 0-.8-.7 9.6 9.6 0 1 0 12.3 12.3.6.6 0 0 0-.7-.8Z"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.6" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1.8v2.4M12 19.8v2.4M1.8 12h2.4M19.8 12h2.4M4.8 4.8l1.7 1.7M17.5 17.5l1.7 1.7M4.8 19.2l1.7-1.7M17.5 6.5l1.7-1.7"/></g></svg>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -356,6 +365,7 @@
   }
   readColors();
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readColors);
+  document.addEventListener('themechange', readColors);
 
   var STEP = 3, SPEED = 70;            // px per sample, px per second
   var W = 0, H = 0, dpr = 1, N = 0, len = 0, head = 0, chans = [], stims = [];
@@ -546,31 +556,47 @@
 // ---- Laser-pointer cursor (mouse / trackpad only) ----
 (function () {
   if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var root = document.documentElement;
-  var dot = document.createElement('div'), halo = document.createElement('div');
-  dot.className = 'laser'; halo.className = 'laser-halo';
-  dot.setAttribute('aria-hidden', 'true'); halo.setAttribute('aria-hidden', 'true');
-  document.body.appendChild(halo); document.body.appendChild(dot);
+  var dot = document.createElement('div');
+  dot.className = 'laser'; dot.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(dot);
   root.classList.add('has-laser');
-  var mx = -100, my = -100, hx = -100, hy = -100, raf = 0;
   var HOVER = 'a, button, summary, .pcard, .ncard, .xcard, .portrait-wrap, [tabindex]';
-  function loop() {
-    var k = reduce ? 1 : 0.18;
-    hx += (mx - hx) * k; hy += (my - hy) * k;
-    dot.style.transform = 'translate(' + mx + 'px,' + my + 'px)';
-    halo.style.transform = 'translate(' + hx + 'px,' + hy + 'px)';
-    raf = (Math.abs(mx - hx) > .2 || Math.abs(my - hy) > .2) ? requestAnimationFrame(loop) : 0;
-  }
   window.addEventListener('mousemove', function (e) {
-    mx = e.clientX; my = e.clientY;
-    if (!root.classList.contains('laser-on')) { hx = mx; hy = my; root.classList.add('laser-on'); }
+    dot.style.transform = 'translate(' + e.clientX + 'px,' + e.clientY + 'px)';
+    root.classList.add('laser-on');
     root.classList.toggle('laser-hover', !!(e.target.closest && e.target.closest(HOVER)));
-    if (!raf) raf = requestAnimationFrame(loop);
   }, { passive: true });
   document.addEventListener('mouseleave', function () { root.classList.remove('laser-on'); });
   window.addEventListener('mousedown', function () { root.classList.add('laser-down'); });
   window.addEventListener('mouseup', function () { root.classList.remove('laser-down'); });
+})();
+</script>
+
+<script>
+// ---- Light / dark toggle ----
+(function () {
+  var root = document.documentElement, btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  function current() { return root.getAttribute('data-theme') || (mq.matches ? 'dark' : 'light'); }
+  function sync() {
+    var dark = current() === 'dark';
+    btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+    var meta = document.getElementById(dark ? 'tc-dark' : 'tc-light');
+    ['tc-light', 'tc-dark'].forEach(function (id) { var m = document.getElementById(id); if (m) m.removeAttribute('media'); });
+    document.getElementById('tc-light').setAttribute('content', dark ? '#121815' : '#F2F5F1');
+    document.getElementById('tc-dark').setAttribute('content', dark ? '#121815' : '#F2F5F1');
+  }
+  btn.addEventListener('click', function () {
+    var next = current() === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('theme', next); } catch (e) {}
+    sync();
+    document.dispatchEvent(new Event('themechange'));
+  });
+  mq.addEventListener('change', function () { if (!root.getAttribute('data-theme')) sync(); });
+  sync();
 })();
 </script>
 </body>
