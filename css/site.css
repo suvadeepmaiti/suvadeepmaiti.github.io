@@ -451,14 +451,32 @@ footer {
 }
 .hero::after { z-index: 0; }
 
-.portrait-wrap { position: relative; margin-bottom: 2.5rem; }
-.portrait-wrap .portrait { margin-bottom: 0; position: relative; z-index: 1; }
-.portrait-wrap .portrait { transition: transform .6s cubic-bezier(.2,.7,.3,1); }
-.portrait-wrap:hover .portrait { transform: translate(-3px, -3px); }
+.portrait-wrap {
+  position: relative; margin-bottom: 2rem; border-radius: 22px; overflow: hidden;
+  background: radial-gradient(circle at 50% 35%,
+    color-mix(in srgb, var(--link) 22%, var(--paper)) 0,
+    color-mix(in srgb, var(--link) 8%, var(--paper-2)) 55%,
+    var(--paper-2) 100%);
+  box-shadow: 0 0 0 1px var(--rule), 0 18px 40px -18px rgba(0,0,0,.35);
+}
+.portrait-wrap::before {
+  content: ""; position: absolute; inset: 0; opacity: .5;
+  background-image:
+    linear-gradient(var(--grid-strong) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-strong) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+.portrait-wrap .portrait {
+  position: relative; z-index: 1; margin: 0;
+  width: clamp(12rem, 23vw, 18rem); aspect-ratio: auto; object-fit: contain;
+  padding-top: 1.2rem; box-shadow: none; border-radius: 0;
+  transition: transform .6s cubic-bezier(.2,.7,.3,1);
+}
+.portrait-wrap:hover .portrait { transform: translateY(-3px); }
 
 @media (max-width: 680px) {
-  .portrait-wrap { order: -1; width: 8.5rem; margin-bottom: 1.75rem; }
-  .portrait-wrap .portrait { width: 100%; }
+  .portrait-wrap { order: -1; width: 9.5rem; margin-bottom: 1.75rem; border-radius: 16px; }
+  .portrait-wrap .portrait { width: 100%; padding-top: .7rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .portrait-wrap .portrait { transition: none !important; }
