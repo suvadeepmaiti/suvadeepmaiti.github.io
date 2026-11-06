@@ -57,6 +57,7 @@
 </header>
 
 <section class="hero" aria-label="Introduction">
+  <canvas class="eeg-bg" id="eegbg" aria-hidden="true"></canvas>
   <div class="hero-inner">
     <div>
       <h1><span>Suvadeep</span><span>Maiti</span></h1>
@@ -70,7 +71,12 @@
         <li><a href="https://www.linkedin.com/in/suvadeep-maiti/" target="_blank" rel="noopener">LinkedIn</a></li>
       </ul>
     </div>
-    <img class="portrait" src="images/portrait.webp" width="720" height="900" alt="Portrait of Suvadeep Maiti">
+    <div class="portrait-wrap" id="portrait">
+      <img class="portrait" src="images/portrait.webp" width="720" height="900" alt="Portrait of Suvadeep Maiti">
+      <span class="ring" aria-hidden="true"></span>
+      <span class="ring r2" aria-hidden="true"></span>
+      <span class="elec e1" aria-hidden="true"></span><span class="elec e2" aria-hidden="true"></span><span class="elec e3" aria-hidden="true"></span><span class="elec e4" aria-hidden="true"></span>
+    </div>
   </div>
   <div class="trace-wrap" aria-hidden="true">
     <svg class="trace" id="trace" viewBox="0 0 1200 150" preserveAspectRatio="none"></svg>
@@ -418,6 +424,153 @@
       });
     }, { rootMargin: '-40% 0px -55% 0px' });
     document.querySelectorAll('main .section').forEach(function (s) { io.observe(s); });
+  }
+})();
+
+// ---- Live multichannel EEG behind the hero ----
+(function () {
+  var cv = document.getElementById('eegbg');
+  if (!cv || !cv.getContext) return;
+  var ctx = cv.getContext('2d');
+  var hero = cv.parentElement;
+  var portrait = document.getElementById('portrait');
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var css = getComputedStyle(document.documentElement);
+  var ink, trace;
+  function readColors() {
+    css = getComputedStyle(document.documentElement);
+    ink = css.getPropertyValue('--muted').trim() || '#56645E';
+    trace = css.getPropertyValue('--trace').trim() || '#B3123F';
+  }
+  readColors();
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readColors);
+
+  var STEP = 3, SPEED = 70;            // px per sample, px per second
+  var W = 0, H = 0, dpr = 1, N = 0, len = 0, head = 0, chans = [], stims = [];
+  var seed = 11;
+  function rnd() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+
+  // Evoked-potential shape (in samples since stimulus)
+  function ep(s) {
+    return -4 * Math.exp(-Math.pow((s - 4) / 2, 2))
+         + 10 * Math.exp(-Math.pow((s - 12) / 4, 2))
+         - 22 * Math.exp(-Math.pow((s - 28) / 7, 2))
+         + 7 * Math.exp(-Math.pow((s - 55) / 12, 2));
+  }
+
+  function setup() {
+    var r = hero.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = Math.ceil(r.width); H = Math.ceil(r.height);
+    cv.width = W * dpr; cv.height = H * dpr;
+    cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    N = W < 700 ? 7 : 10;
+    len = Math.ceil(W / STEP) + 2;
+    chans = [];
+    for (var c = 0; c < N; c++) {
+      chans.push({
+        buf: new Float32Array(len), ev: new Float32Array(len),
+        n: 0, p1: rnd() * 6, p2: rnd() * 6, p3: rnd() * 6,
+        f1: 0.18 + rnd() * 0.08, f2: 0.05 + rnd() * 0.03, f3: 0.6 + rnd() * 0.3,
+        gain: 0.4 + rnd() * 0.9      // how strongly this channel picks up the evoked response
+      });
+    }
+    stims = []; head = 0;
+    for (var i = 0; i < len; i++) push();
+  }
+
+  var sinceStim = 1e9, nextStim = 60;
+  function push() {
+    sinceStim++;
+    if (--nextStim <= 0) {
+      sinceStim = 0; nextStim = Math.round((4 + rnd() * 2.5) * SPEED / STEP);
+      stims.push(len); // position measured in samples from oldest; shifts with head
+      if (portrait && !reduce) {
+        portrait.classList.remove('pulse'); void portrait.offsetWidth; portrait.classList.add('pulse');
+      }
+    }
+    for (var c = 0; c < N; c++) {
+      var ch = chans[c];
+      ch.n = ch.n * 0.7 + (rnd() - 0.5) * 4.4;
+      ch.p1 += ch.f1; ch.p2 += ch.f2; ch.p3 += ch.f3;
+      var y = Math.sin(ch.p1) * 3.2 + Math.sin(ch.p2) * 4 + Math.sin(ch.p3) * 1.4 + ch.n;
+      var e = sinceStim < 90 ? ep(sinceStim) * ch.gain : 0;
+      ch.buf[head] = y + e;
+      ch.ev[head] = Math.max(0, Math.min(1, (Math.abs(e) - 3) / 10));
+    }
+    head = (head + 1) % len;
+    for (var k = stims.length - 1; k >= 0; k--) { stims[k]--; if (stims[k] < 0) stims.splice(k, 1); }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    var top = 78, bottom = H - (W < 700 ? 90 : 130), gap = (bottom - top) / (N - 1 || 1);
+    ctx.lineWidth = 1;
+    ctx.lineJoin = 'round';
+    // stimulus marks
+    ctx.save();
+    ctx.strokeStyle = ink; ctx.globalAlpha = 0.35; ctx.setLineDash([3, 5]);
+    for (var k = 0; k < stims.length; k++) {
+      var sx = stims[k] * STEP - STEP; 
+      ctx.beginPath(); ctx.moveTo(sx, top - 30); ctx.lineTo(sx, bottom + 20); ctx.stroke();
+    }
+    ctx.restore();
+    for (var c = 0; c < N; c++) {
+      var ch = chans[c], base = top + c * gap;
+      // baseline trace
+      ctx.globalAlpha = 0.32; ctx.strokeStyle = ink;
+      ctx.beginPath();
+      for (var i = 0; i < len; i++) {
+        var idx = (head + i) % len, x = i * STEP - STEP, y = base + ch.buf[idx];
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      // evoked portions in accent colour
+      ctx.strokeStyle = trace; ctx.lineWidth = 1.4;
+      for (var j = 1; j < len; j++) {
+        var a = (head + j - 1) % len, b = (head + j) % len, v = Math.max(ch.ev[a], ch.ev[b]);
+        if (v < 0.05) continue;
+        ctx.globalAlpha = 0.25 + v * 0.55;
+        ctx.beginPath();
+        ctx.moveTo((j - 1) * STEP - STEP, base + ch.buf[a]);
+        ctx.lineTo(j * STEP - STEP, base + ch.buf[b]);
+        ctx.stroke();
+      }
+      ctx.lineWidth = 1;
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  var last = 0, acc = 0, running = true, raf = 0;
+  function frame(t) {
+    raf = 0;
+    if (!running) return;
+    var dt = last ? Math.min((t - last) / 1000, 0.1) : 0; last = t;
+    acc += dt * SPEED;
+    while (acc >= STEP) { push(); acc -= STEP; }
+    // sub-sample scroll for smoothness
+    ctx.save(); draw(); ctx.restore();
+    cv.style.transform = 'translateX(' + (-acc).toFixed(2) + 'px)';
+    raf = requestAnimationFrame(frame);
+  }
+  function start() { if (!raf && running) { last = 0; raf = requestAnimationFrame(frame); } }
+
+  setup();
+  if (reduce) { draw(); return; }
+  start();
+
+  var rt;
+  window.addEventListener('resize', function () {
+    clearTimeout(rt); rt = setTimeout(function () { setup(); draw(); }, 150);
+  });
+  document.addEventListener('visibilitychange', function () {
+    running = !document.hidden; if (running) start();
+  });
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (es) {
+      running = es[0].isIntersecting && !document.hidden; if (running) start();
+    }).observe(hero);
   }
 })();
 </script>
